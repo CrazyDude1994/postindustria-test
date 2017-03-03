@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">NearbyTweets</string>
+
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+
+    <string name="action_settings">Settings</string>
+    <string name="header_title">Test application for PostIndustria</string>
+    <string name="email">crazykawaidesu@gmail.com</string>
+    <string name="favorites">Favorites</string>
+    <string name="nearby">Nearby</string>
+    <string name="search">Search</string>
+    <string name="error_while_loading">Error while loading</string>
+</resources>
