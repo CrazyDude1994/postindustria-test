@@ -21,7 +21,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>
 
-        <com.apradanas.simplelinkabletext.LinkableTextView
+        <com.wordpress.priyankvex.smarttextview.SmartTextView
             android:id="@+id/view_tweet_message"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>

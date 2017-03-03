@@ -54,7 +54,7 @@ public class TwitterAPI {
         return generateTweetSearch(new Query().geoCode(new GeoLocation(latitude, longitude), radius, "km"));
     }
 
-    public Observable<List<Tweet>> searchTweets(double latitude, double longitude, double radius, Integer maxId) {
+    public Observable<List<Tweet>> searchTweets(double latitude, double longitude, double radius, Long maxId) {
         return generateTweetSearch(new Query().geoCode(new GeoLocation(latitude, longitude), radius, "km").maxId(maxId));
     }
 

@@ -4,22 +4,13 @@ import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.view.View;
 
 import com.crazydude.nearbytweets.api.TwitterAPI;
-import com.crazydude.nearbytweets.models.Tweet;
-import com.crazydude.nearbytweets.utils.ObservableUtils;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationServices;
 
-import java.util.List;
-
-import io.reactivex.ObservableSource;
 import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.disposables.Disposable;
-import io.reactivex.functions.Consumer;
-import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
 
 /**
@@ -29,16 +20,8 @@ import io.reactivex.schedulers.Schedulers;
 public class NearbyTweetsFragment extends TweetsListFragment implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
     private TwitterAPI mTwitterAPI;
-    private Disposable mPaginationDisposable;
     private GoogleApiClient mGoogleApiClient;
     private Location mLastLocation;
-
-    @Override
-    public void onRefresh() {
-        mSwipeRefreshLayout.setRefreshing(false);
-        mTweetsAdapter.clear();
-        initPagination();
-    }
 
     @Override
     public void onHashtagClicked(String hashtag) {
@@ -51,9 +34,20 @@ public class NearbyTweetsFragment extends TweetsListFragment implements GoogleAp
     }
 
     @Override
-    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-        initPagination();
+    protected void loadData() {
+        mTweetsAdapter.clear();
+        mTwitterAPI.searchTweets(mLastLocation.getLatitude(), mLastLocation.getLongitude(), 10)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeOn(Schedulers.io())
+                .subscribe(getDefaultObserver());
+    }
+
+    @Override
+    protected void loadMore(long maxId) {
+        mTwitterAPI.searchTweets(mLastLocation.getLatitude(), mLastLocation.getLongitude(), 10, maxId)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeOn(Schedulers.io())
+                .subscribe(getDefaultObserver());
     }
 
     @Override
@@ -65,15 +59,7 @@ public class NearbyTweetsFragment extends TweetsListFragment implements GoogleAp
     public void onConnected(@Nullable Bundle bundle) {
         mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
         if (mLastLocation != null) {
-            mTwitterAPI.searchTweets(mLastLocation.getLatitude(), mLastLocation.getLongitude(), 10, 0)
-                    .subscribeOn(Schedulers.io())
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(new Consumer<List<Tweet>>() {
-                        @Override
-                        public void accept(List<Tweet> tweets) throws Exception {
-                            mTweetsAdapter.setData(tweets);
-                        }
-                    });
+            loadData();
         }
     }
 
@@ -100,29 +86,6 @@ public class NearbyTweetsFragment extends TweetsListFragment implements GoogleAp
     public void onStop() {
         mGoogleApiClient.disconnect();
         super.onStop();
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        mPaginationDisposable.dispose();
-    }
-
-    private void initPagination() {
-        mPaginationDisposable = ObservableUtils.recyclerViewObservable(mRecyclerView, mLinearLayoutManager)
-                .flatMap(new Function<Long, ObservableSource<List<Tweet>>>() {
-                    @Override
-                    public ObservableSource<List<Tweet>> apply(Long maxId) throws Exception {
-                        return mTwitterAPI.searchTweets(mLastLocation.getLatitude(), mLastLocation.getLongitude(), 10).subscribeOn(Schedulers.io());
-                    }
-                })
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Consumer<List<Tweet>>() {
-                    @Override
-                    public void accept(List<Tweet> tweets) throws Exception {
-                        mTweetsAdapter.addData(tweets);
-                    }
-                });
     }
 
     private void initGoogleApi() {

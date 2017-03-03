@@ -2,25 +2,25 @@ package com.crazydude.nearbytweets.ui.views;
 
 import android.content.Context;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.apradanas.simplelinkabletext.Link;
-import com.apradanas.simplelinkabletext.LinkableTextView;
 import com.crazydude.nearbytweets.R;
 import com.crazydude.nearbytweets.models.Tweet;
-import com.crazydude.nearbytweets.utils.LinkUtils;
 import com.squareup.picasso.Picasso;
+import com.wordpress.priyankvex.smarttextview.SmartTextCallback;
+import com.wordpress.priyankvex.smarttextview.SmartTextView;
 
 /**
  * Created by Crazy on 02.03.2017.
  */
 
-public class TweetView extends FrameLayout implements ViewModel<Tweet> {
+public class TweetView extends FrameLayout implements ViewModel<Tweet>, SmartTextCallback {
 
-    private LinkableTextView mMessageTextView;
+    private SmartTextView mMessageTextView;
     private TextView mUsernameTextView;
     private ImageView mAvatarView;
     private TweetListener mListener;
@@ -50,29 +50,41 @@ public class TweetView extends FrameLayout implements ViewModel<Tweet> {
     }
 
     @Override
+    public void hashTagClick(String hashTag) {
+        if (mListener != null) {
+            mListener.onHashtagClicked(hashTag);
+        }
+    }
+
+    @Override
+    public void mentionClick(String mention) {
+        if (mListener != null) {
+            mListener.onHashtagClicked(mention);
+        }
+    }
+
+    @Override
+    public void emailClick(String email) {
+
+    }
+
+    @Override
+    public void phoneNumberClick(String phoneNumber) {
+
+    }
+
+    @Override
+    public void webUrlClick(String webUrl) {
+
+    }
+
+    @Override
     public void setData(Tweet data) {
-        Link hashtagLink = LinkUtils.getHashtagLink().setClickListener(new Link.OnClickListener() {
-            @Override
-            public void onClick(String text) {
-                if (mListener != null) {
-                    mListener.onHashtagClicked(text);
-                }
-            }
-        });
-
-        Link mentionLink = LinkUtils.getMentionLink().setClickListener(new Link.OnClickListener() {
-            @Override
-            public void onClick(String text) {
-                if (mListener != null) {
-                    mListener.onMentionClicked(text);
-                }
-            }
-        });
-
-        mMessageTextView.setText(data.getMessage())
-                .addLink(hashtagLink)
-                .addLink(mentionLink)
-                .build();
+        try {
+            mMessageTextView.setText(data.getMessage());
+        } catch (IndexOutOfBoundsException e) {
+            Log.d("TweetView", "Failed to set text " + data.getMessage());
+        }
         mUsernameTextView.setText(data.getUser().getUsername());
         Picasso.with(getContext())
                 .load(data.getUser().getAvatarURL())
@@ -82,7 +94,10 @@ public class TweetView extends FrameLayout implements ViewModel<Tweet> {
     private void init() {
         View view = inflate(getContext(), R.layout.view_tweet, this);
 
-        mMessageTextView = (LinkableTextView) view.findViewById(R.id.view_tweet_message);
+        mMessageTextView = (SmartTextView) view.findViewById(R.id.view_tweet_message);
+        mMessageTextView.setDetectMentions(true);
+        mMessageTextView.setDetectHashTags(true);
+        mMessageTextView.setSmartTextCallback(this);
         mUsernameTextView = (TextView) view.findViewById(R.id.view_tweet_username);
         mAvatarView = (ImageView) view.findViewById(R.id.view_tweet_avatar);
     }

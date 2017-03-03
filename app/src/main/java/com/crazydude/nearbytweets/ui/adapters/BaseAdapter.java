@@ -48,7 +48,7 @@ public abstract class BaseAdapter<T1, T2 extends View & ViewModel, T3 extends Ba
 
     public void addData(List<T1> data) {
         mContent.addAll(data);
-        notifyItemRangeInserted(mContent.size() - 1 - data.size(), data.size());
+        notifyItemRangeInserted(mContent.size() - data.size(), data.size());
     }
 
     public void removeData(int position) {

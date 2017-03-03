@@ -48,7 +48,7 @@ public class DataMapper {
         return new User() {
             @Override
             public String getAvatarURL() {
-                return user.getProfileImageURL();
+                return user.getBiggerProfileImageURL();
             }
 
             @Override
