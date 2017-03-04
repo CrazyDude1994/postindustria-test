@@ -30,6 +30,7 @@ public class NearbyTweetsFragment extends TweetsListFragment implements GoogleAp
     @Override
     protected void loadData() {
         mTweetsAdapter.clear();
+        resetPagination();
         mTwitterAPI.searchTweets(mLastLocation.getLatitude(), mLastLocation.getLongitude(), 10)
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribeOn(Schedulers.io())
