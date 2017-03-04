@@ -10,6 +10,7 @@ import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 
 import com.crazydude.nearbytweets.R;
+import com.crazydude.nearbytweets.ui.fragments.FavoritedTweetsFragment;
 import com.crazydude.nearbytweets.ui.fragments.NearbyTweetsFragment;
 import com.crazydude.nearbytweets.ui.fragments.SearchTweetsFragment;
 
@@ -45,6 +46,10 @@ public class MainActivity extends AppCompatActivity
                         .replace(R.id.content_main, new NearbyTweetsFragment())
                         .commit();
                 break;
+            case R.id.nav_favorites:
+                getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.content_main, new FavoritedTweetsFragment())
+                        .commit();
         }
         return true;
     }

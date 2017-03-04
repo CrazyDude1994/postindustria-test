@@ -17,6 +17,18 @@ public class TweetsAdapter extends BaseAdapter<Tweet, TweetView, BaseViewHolder<
         mTweetListener = tweetListener;
     }
 
+    public void update(Tweet tweet) {
+        int i = 0;
+        for (Tweet currentTweet : mContent) {
+            if (currentTweet.getId() == tweet.getId()) {
+                mContent.set(i, tweet);
+                notifyItemChanged(i);
+                break;
+            }
+            i++;
+        }
+    }
+
     @Override
     public BaseViewHolder<TweetView> onCreateViewHolder(ViewGroup parent, int viewType) {
         TweetView tweetView = new TweetView(parent.getContext());

@@ -10,5 +10,7 @@ public interface Tweet {
 
     String getMessage();
 
+    boolean isFavorited();
+
     User getUser();
 }

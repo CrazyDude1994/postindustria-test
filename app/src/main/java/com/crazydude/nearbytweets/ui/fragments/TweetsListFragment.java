@@ -1,5 +1,7 @@
 package com.crazydude.nearbytweets.ui.fragments;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -12,6 +14,8 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.crazydude.nearbytweets.R;
+import com.crazydude.nearbytweets.db.DatabaseManager;
+import com.crazydude.nearbytweets.db.TweetModel;
 import com.crazydude.nearbytweets.models.Tweet;
 import com.crazydude.nearbytweets.ui.adapters.TweetsAdapter;
 import com.crazydude.nearbytweets.ui.views.TweetView;
@@ -36,6 +40,10 @@ public abstract class TweetsListFragment extends Fragment implements TweetView.T
     private boolean mIsLoading = false;
     private Disposable mDisposable;
 
+    protected abstract void loadData();
+
+    protected abstract void loadMore(long maxId);
+
     @Override
     public void onRefresh() {
         loadData();
@@ -50,6 +58,25 @@ public abstract class TweetsListFragment extends Fragment implements TweetView.T
     @Override
     public void onMentionClicked(String mention) {
         //Empty implementation
+    }
+
+    @Override
+    public void onLinkClicked(String url) {
+        Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+        startActivity(browserIntent);
+    }
+
+    @Override
+    public void onFavoritedClicked(Tweet tweet) {
+        TweetModel tweetModel = new TweetModel(tweet);
+        if (!tweet.isFavorited()) {
+            tweetModel.setFavorited(true);
+            DatabaseManager.saveTweet(tweetModel);
+        } else {
+            tweetModel.setFavorited(false);
+            DatabaseManager.removeTweet(tweet.getId());
+        }
+        mTweetsAdapter.update(tweetModel);
     }
 
     @Nullable
@@ -67,7 +94,13 @@ public abstract class TweetsListFragment extends Fragment implements TweetView.T
         initViews();
     }
 
-    protected abstract void loadData();
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if (mDisposable != null) {
+            mDisposable.dispose();
+        }
+    }
 
     protected void setRefreshing(boolean refreshing) {
         mSwipeRefreshLayout.setRefreshing(refreshing);
@@ -75,6 +108,10 @@ public abstract class TweetsListFragment extends Fragment implements TweetView.T
 
     protected void allowNextPage() {
         mIsLoading = false;
+    }
+
+    protected void disableRefresh() {
+        mSwipeRefreshLayout.setEnabled(false);
     }
 
     protected void disablePagination() {
@@ -85,8 +122,6 @@ public abstract class TweetsListFragment extends Fragment implements TweetView.T
         mPaginationEnabled = true;
         mIsLoading = false;
     }
-
-    protected abstract void loadMore(long maxId);
 
     protected Observer<List<Tweet>> getDefaultObserver() {
         return new Observer<List<Tweet>>() {

@@ -6,6 +6,8 @@ package com.crazydude.nearbytweets.models;
 
 public interface User {
 
+    long getId();
+
     String getAvatarURL();
 
     String getUsername();

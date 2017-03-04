@@ -1,9 +1,12 @@
 package com.crazydude.nearbytweets.ui.fragments;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityCompat;
 
 import com.crazydude.nearbytweets.api.TwitterAPI;
 import com.google.android.gms.common.ConnectionResult;
@@ -19,19 +22,10 @@ import io.reactivex.schedulers.Schedulers;
 
 public class NearbyTweetsFragment extends TweetsListFragment implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
+    private static final int REQUEST_PERMISSIONS_CODE = 0;
     private TwitterAPI mTwitterAPI;
     private GoogleApiClient mGoogleApiClient;
     private Location mLastLocation;
-
-    @Override
-    public void onHashtagClicked(String hashtag) {
-        super.onHashtagClicked(hashtag);
-    }
-
-    @Override
-    public void onMentionClicked(String mention) {
-        super.onMentionClicked(mention);
-    }
 
     @Override
     protected void loadData() {
@@ -51,21 +45,41 @@ public class NearbyTweetsFragment extends TweetsListFragment implements GoogleAp
     }
 
     @Override
+    public void onHashtagClicked(String hashtag) {
+        super.onHashtagClicked(hashtag);
+    }
+
+    @Override
+    public void onMentionClicked(String mention) {
+        super.onMentionClicked(mention);
+    }
+
+    @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
 
     }
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
-        mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-        if (mLastLocation != null) {
-            loadData();
+        if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            String[] permissions = {Manifest.permission.ACCESS_FINE_LOCATION};
+            requestPermissions(permissions, REQUEST_PERMISSIONS_CODE);
+        } else {
+            loadPosition();
         }
     }
 
     @Override
     public void onConnectionSuspended(int i) {
 
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_PERMISSIONS_CODE && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            loadPosition();
+        }
     }
 
     @Override
@@ -86,6 +100,13 @@ public class NearbyTweetsFragment extends TweetsListFragment implements GoogleAp
     public void onStop() {
         mGoogleApiClient.disconnect();
         super.onStop();
+    }
+
+    private void loadPosition() {
+        mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+        if (mLastLocation != null) {
+            loadData();
+        }
     }
 
     private void initGoogleApi() {
