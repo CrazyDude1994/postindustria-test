@@ -27,21 +27,19 @@ import io.reactivex.schedulers.Schedulers;
 
 public class SearchTweetsFragment extends TweetsListFragment {
 
+    public static final String STARTING_QUERY_ARG = "starting_query";
     private TwitterAPI mTwitterAPI;
     private Disposable mSearchDisposable;
     private String mLastQuery = "";
     private SearchView mSearchView;
 
-    @Override
-    public void onHashtagClicked(String hashtag) {
-        super.onHashtagClicked(hashtag);
-        mSearchView.setQuery(hashtag, true);
-    }
+    public static SearchTweetsFragment newInstance(String startingQuery) {
+        SearchTweetsFragment searchTweetsFragment = new SearchTweetsFragment();
+        Bundle bundle = new Bundle();
+        bundle.putString(STARTING_QUERY_ARG, startingQuery);
+        searchTweetsFragment.setArguments(bundle);
 
-    @Override
-    public void onMentionClicked(String mention) {
-        super.onMentionClicked(mention);
-        mSearchView.setQuery(mention, true);
+        return searchTweetsFragment;
     }
 
     @Override
@@ -63,17 +61,30 @@ public class SearchTweetsFragment extends TweetsListFragment {
     }
 
     @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-        setHasOptionsMenu(true);
-        mTwitterAPI = TwitterAPI.getInstance();
-    }
-
-    @Override
     public void onDestroy() {
         super.onDestroy();
         mSearchDisposable.dispose();
+    }
+
+    @Override
+    public void onHashtagClicked(String hashtag) {
+        mSearchView.setQuery(hashtag, true);
+    }
+
+    @Override
+    public void onMentionClicked(String mention) {
+        mSearchView.setQuery(mention, true);
+    }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        Bundle arguments = getArguments();
+        mLastQuery = arguments.getString(STARTING_QUERY_ARG, "");
+
+        setHasOptionsMenu(true);
+        mTwitterAPI = TwitterAPI.getInstance();
     }
 
     @Override
@@ -81,13 +92,12 @@ public class SearchTweetsFragment extends TweetsListFragment {
         super.onCreateOptionsMenu(menu, inflater);
         inflater.inflate(R.menu.main, menu);
         MenuItem searchItem = menu.findItem(R.id.action_search);
-        SearchView searchView = (SearchView) MenuItemCompat.getActionView(searchItem);
-        initSearchView(searchView);
+        initSearchView(searchItem);
     }
 
-    private void initSearchView(SearchView searchView) {
-        mSearchView = searchView;
-        mSearchDisposable = ObservableUtils.searchViewObservable(searchView)
+    private void initSearchView(final MenuItem searchItem) {
+        mSearchView = (SearchView) MenuItemCompat.getActionView(searchItem);
+        mSearchDisposable = ObservableUtils.searchViewObservable(mSearchView)
                 .filter(new Predicate<String>() {
                     @Override
                     public boolean test(String s) throws Exception {
@@ -105,5 +115,9 @@ public class SearchTweetsFragment extends TweetsListFragment {
                         Log.d("RxJava", "Search: " + query);
                     }
                 });
+        if (!mLastQuery.isEmpty()) {
+            MenuItemCompat.expandActionView(searchItem);
+            mSearchView.setQuery(mLastQuery, false);
+        }
     }
 }

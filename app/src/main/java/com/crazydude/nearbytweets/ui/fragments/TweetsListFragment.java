@@ -1,7 +1,6 @@
 package com.crazydude.nearbytweets.ui.fragments;
 
-import android.content.Intent;
-import android.net.Uri;
+import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -39,6 +38,7 @@ public abstract class TweetsListFragment extends Fragment implements TweetView.T
     private boolean mPaginationEnabled = true;
     private boolean mIsLoading = false;
     private Disposable mDisposable;
+    private TweetActionClickListener mTweetActionClickListener;
 
     protected abstract void loadData();
 
@@ -51,32 +51,13 @@ public abstract class TweetsListFragment extends Fragment implements TweetView.T
     }
 
     @Override
-    public void onHashtagClicked(String hashtag) {
-        //Empty implementation
-    }
-
-    @Override
-    public void onMentionClicked(String mention) {
-        //Empty implementation
-    }
-
-    @Override
-    public void onLinkClicked(String url) {
-        Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-        startActivity(browserIntent);
-    }
-
-    @Override
-    public void onFavoritedClicked(Tweet tweet) {
-        TweetModel tweetModel = new TweetModel(tweet);
-        if (!tweet.isFavorited()) {
-            tweetModel.setFavorited(true);
-            DatabaseManager.saveTweet(tweetModel);
-        } else {
-            tweetModel.setFavorited(false);
-            DatabaseManager.removeTweet(tweet.getId());
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        try {
+            mTweetActionClickListener = (TweetActionClickListener) getActivity();
+        } catch (ClassCastException e) {
+            throw new RuntimeException("Hosting activity must implement " + TweetActionClickListener.class.getSimpleName());
         }
-        mTweetsAdapter.update(tweetModel);
     }
 
     @Nullable
@@ -100,6 +81,34 @@ public abstract class TweetsListFragment extends Fragment implements TweetView.T
         if (mDisposable != null) {
             mDisposable.dispose();
         }
+    }
+
+    @Override
+    public void onHashtagClicked(String hashtag) {
+        mTweetActionClickListener.onHashtagClicked(hashtag);
+    }
+
+    @Override
+    public void onMentionClicked(String mention) {
+        mTweetActionClickListener.onMentionClicked(mention);
+    }
+
+    @Override
+    public void onLinkClicked(String url) {
+        mTweetActionClickListener.onWebLinkClicked(url);
+    }
+
+    @Override
+    public void onFavoritedClicked(Tweet tweet) {
+        TweetModel tweetModel = new TweetModel(tweet);
+        if (!tweet.isFavorited()) {
+            tweetModel.setFavorited(true);
+            DatabaseManager.saveTweet(tweetModel);
+        } else {
+            tweetModel.setFavorited(false);
+            DatabaseManager.removeTweet(tweet.getId());
+        }
+        mTweetsAdapter.update(tweetModel);
     }
 
     protected void setRefreshing(boolean refreshing) {
@@ -184,5 +193,14 @@ public abstract class TweetsListFragment extends Fragment implements TweetView.T
                 }
             }
         });
+    }
+
+    public interface TweetActionClickListener {
+
+        void onHashtagClicked(String hashtag);
+
+        void onMentionClicked(String mention);
+
+        void onWebLinkClicked(String url);
     }
 }

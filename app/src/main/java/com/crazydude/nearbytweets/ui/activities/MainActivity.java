@@ -1,5 +1,7 @@
 package com.crazydude.nearbytweets.ui.activities;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -13,9 +15,28 @@ import com.crazydude.nearbytweets.R;
 import com.crazydude.nearbytweets.ui.fragments.FavoritedTweetsFragment;
 import com.crazydude.nearbytweets.ui.fragments.NearbyTweetsFragment;
 import com.crazydude.nearbytweets.ui.fragments.SearchTweetsFragment;
+import com.crazydude.nearbytweets.ui.fragments.TweetsListFragment;
 
 public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener {
+        implements NavigationView.OnNavigationItemSelectedListener, TweetsListFragment.TweetActionClickListener {
+
+    private NavigationView mNavigationView;
+
+    @Override
+    public void onHashtagClicked(String hashtag) {
+        switchToSearchTweetsFragment(hashtag);
+    }
+
+    @Override
+    public void onMentionClicked(String mention) {
+        switchToSearchTweetsFragment(mention);
+    }
+
+    @Override
+    public void onWebLinkClicked(String url) {
+        Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+        startActivity(browserIntent);
+    }
 
     @Override
     public void onBackPressed() {
@@ -37,9 +58,7 @@ public class MainActivity extends AppCompatActivity
         drawer.closeDrawer(GravityCompat.START);
         switch (id) {
             case R.id.nav_search:
-                getSupportFragmentManager().beginTransaction()
-                        .replace(R.id.content_main, new SearchTweetsFragment())
-                        .commit();
+                switchToSearchTweetsFragment("");
                 break;
             case R.id.nav_nearby:
                 getSupportFragmentManager().beginTransaction()
@@ -67,7 +86,15 @@ public class MainActivity extends AppCompatActivity
         drawer.setDrawerListener(toggle);
         toggle.syncState();
 
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
-        navigationView.setNavigationItemSelectedListener(this);
+        mNavigationView = (NavigationView) findViewById(R.id.nav_view);
+        mNavigationView.setNavigationItemSelectedListener(this);
     }
+
+    private void switchToSearchTweetsFragment(String query) {
+        mNavigationView.setCheckedItem(R.id.nav_search);
+        getSupportFragmentManager().beginTransaction()
+                .replace(R.id.content_main, SearchTweetsFragment.newInstance(query))
+                .commit();
+    }
+
 }
